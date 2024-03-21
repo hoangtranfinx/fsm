@@ -1,10 +1,13 @@
 package com.example.finitestatemachine.infra;
 
+import com.example.finitestatemachine.infra.action.FSMAction;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.Message;
 import org.springframework.statemachine.action.Action;
 import org.springframework.statemachine.config.EnableStateMachine;
+import org.springframework.statemachine.config.EnableStateMachineFactory;
 import org.springframework.statemachine.config.EnumStateMachineConfigurerAdapter;
 import org.springframework.statemachine.config.builders.StateMachineConfigurationConfigurer;
 import org.springframework.statemachine.config.builders.StateMachineStateConfigurer;
@@ -19,18 +22,21 @@ import java.util.EnumSet;
 import java.util.Optional;
 
 @Configuration
-@EnableStateMachine
+@EnableStateMachineFactory
 @Slf4j
+@RequiredArgsConstructor
 public class StateMachineConfig
         extends EnumStateMachineConfigurerAdapter<StateMachineConfig.States, StateMachineConfig.Events> {
 
     public enum States {
-        INIT, S1, S2, S3, END
+        INIT, S1, S2, END
     }
 
     public enum Events {
-        GenID, ESIGN_FPT, ESIGN_HDB, CBS
+        GenID, ESIGN_HDB, CBS
     }
+
+    private final FSMAction action;
 
     @Override
     public void configure(StateMachineConfigurationConfigurer<States, Events> config)
@@ -51,15 +57,6 @@ public class StateMachineConfig
                 .end(States.END);
     }
 
-    private Action<States, Events> doSomething() {
-        return context -> {
-            log.warn("do something {}", context.getEvent());
-//            context.getExtendedState()
-//                    .getVariables()
-//                    .put("deployed", true);
-        };
-    }
-
     @Override
     public void configure(StateMachineTransitionConfigurer<States, Events> transitions)
             throws Exception {
@@ -68,25 +65,21 @@ public class StateMachineConfig
                 .source(States.INIT)
                 .target(States.S1)
                 .event(Events.GenID)
-                .action(doSomething())
+                .action(action.genId())
 
                 .and()
                 .withExternal()
                 .source(States.S1)
                 .target(States.S2)
-                .event(Events.ESIGN_FPT)
+                .event(Events.ESIGN_HDB)
+                .action(action.esignHDB())
 
                 .and()
                 .withExternal()
                 .source(States.S2)
-                .target(States.S3)
-                .event(Events.ESIGN_HDB)
-
-                .and()
-                .withExternal()
-                .source(States.S3)
                 .target(States.END)
                 .event(Events.CBS)
+                ;
 
     }
 

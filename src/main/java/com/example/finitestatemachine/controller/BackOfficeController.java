@@ -1,6 +1,5 @@
 package com.example.finitestatemachine.controller;
 
-import com.example.finitestatemachine.controller.req.Request;
 import com.example.finitestatemachine.core.FSMService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,12 +12,12 @@ import reactor.core.publisher.Mono;
 @Slf4j
 @RequestMapping("/los")
 @RequiredArgsConstructor
-public class LosController {
+public class BackOfficeController {
     private final FSMService fsmService;
 
-    @PostMapping("/upload")
-    public Mono<String> uploadFromCsv(Request request) {
-        fsmService.genID(request.getName());
+    @PostMapping("/continue")
+    public Mono<String> continueOldFlow(String stateId) {
+        fsmService.continueOldFlow(stateId);
         return  Mono.just("Success");
     }
 }
