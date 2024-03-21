@@ -4,8 +4,10 @@ import com.example.finitestatemachine.core.LosHandlerService;
 import com.example.finitestatemachine.infra.StateMachineConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.statemachine.StateContext;
 import org.springframework.statemachine.action.Action;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Mono;
 
 @Component
 @RequiredArgsConstructor
@@ -15,8 +17,9 @@ public class FSMAction {
 
     public Action<StateMachineConfig.States, StateMachineConfig.Events> genId() {
         return context -> {
-            log.warn("do something {}", context.getEvent());
-            service.createLos(context.getMessage().getPayload().toString());
+            String customer = context.getMessageHeaders().get("name", String.class);
+            log.warn("ACTION {}", context.getEvent());
+            service.createLos(customer);
 //            context.getExtendedState()
 //                    .getVariables()
 //                    .put("deployed", true);
@@ -25,7 +28,7 @@ public class FSMAction {
 
     public Action<StateMachineConfig.States, StateMachineConfig.Events> esignHDB() {
         return context -> {
-            log.warn("do something {}", context.getEvent());
+            log.warn("ACTION {}", context.getEvent());
             service.esignHDB(context.getMessage().getPayload().toString());
 //            context.getExtendedState()
 //                    .getVariables()

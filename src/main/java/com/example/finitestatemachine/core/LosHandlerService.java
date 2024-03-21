@@ -10,12 +10,13 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @RequiredArgsConstructor
 public class LosHandlerService {
-    OriginationPersistant persistant;
+    private final OriginationPersistant persistant;
 
     public void createLos(String name) {
-        log.info("do something for {}", name);
+        if(name.equals("hoang")){
+            throw new RuntimeException("hehe");
+        }
         persistant.addOrigination(new Origination(name, "leadId"));
-
     }
 
     public void esignHDB(String id) {

@@ -4,9 +4,9 @@ import com.example.finitestatemachine.infra.StateMachineConfig;
 import com.example.finitestatemachine.infra.exception.RetryableException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Bean;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.statemachine.StateMachine;
 import org.springframework.statemachine.StateMachineEventResult;
 import org.springframework.statemachine.config.StateMachineFactory;
 import org.springframework.stereotype.Service;
@@ -25,18 +25,23 @@ import static com.example.finitestatemachine.infra.StateMachineConfig.Events.Gen
 public class FSMService {
     private final StateMachineFactory<StateMachineConfig.States, StateMachineConfig.Events> stateMachineFactory;
 
-    @Bean
-    public void test(){
-        genID("hoang");
-    }
+//    void method() {
+//        StateMachine<StateMachineConfig.States, StateMachineConfig.Events> stateMachine = stateMachineFactory.getStateMachine();
+//        stateMachine.startReactively().subscribe();
+//    }
 
-    public void genID(String data) {
+    public Mono<Void> genID(String data) {
         // TODO, put data to context ?
         Map<String, Object> headers = new HashMap<>();
-        headers.put("customer", "customer");
+        headers.put("name", data);
 
         MessageHeaders messageHeaders = new MessageHeaders(headers);
-        stateMachineFactory.getStateMachine()
+
+//        stateMachineFactory.getStateMachine()
+//                .startReactively().subscribe();
+//        stateMachine.startReactively().subscribe();
+
+        return stateMachineFactory.getStateMachine()
                 .sendEvent(Mono.just(MessageBuilder.createMessage(GenID, messageHeaders)))
                 .doOnNext(
                         stateMachineEventResult -> {
@@ -48,13 +53,18 @@ public class FSMService {
                         })
                 .doOnComplete(
                         () -> {
-                            log.debug("Send event {} successfully", GenID);
+                            log.info("Send event {} successfully", GenID);
                         })
                 .doOnError(error -> log.error("Error when processing genID", error))
                 .retryWhen(
                         Retry.backoff(2, Duration.ofSeconds(1))
                                 .filter(throwable -> throwable instanceof RetryableException))
-                .subscribe();
+                .then();
+//                .subscribe();
+    }
+
+    public synchronized StateMachine<StateMachineConfig.States, StateMachineConfig.Events> getStateMachine() {
+        return stateMachineFactory.getStateMachine();
     }
 
     public void continueOldFlow(String stateId) {
@@ -63,7 +73,10 @@ public class FSMService {
         headers.put("customer", "customer");
 
         MessageHeaders messageHeaders = new MessageHeaders(headers);
-        stateMachineFactory.getStateMachine()
+
+        var stateMachine = getStateMachine();
+
+        stateMachine
                 .sendEvent(Mono.just(MessageBuilder.createMessage(GenID, messageHeaders)))
                 .doOnNext(
                         stateMachineEventResult -> {

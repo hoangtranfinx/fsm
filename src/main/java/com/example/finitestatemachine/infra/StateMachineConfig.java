@@ -21,6 +21,8 @@ import org.springframework.statemachine.transition.Transition;
 import java.util.EnumSet;
 import java.util.Optional;
 
+import static com.example.finitestatemachine.infra.StateMachineConfig.States.S1;
+
 @Configuration
 @EnableStateMachineFactory
 @Slf4j
@@ -53,9 +55,15 @@ public class StateMachineConfig
         states
                 .withStates()
                 .initial(States.INIT)
+                .state(S1, testConfig())
                 .states(EnumSet.allOf(States.class))
                 .end(States.END);
     }
+
+    public Action<StateMachineConfig.States, StateMachineConfig.Events> testConfig() {
+        return context -> log.info("testConfig");
+    }
+
 
     @Override
     public void configure(StateMachineTransitionConfigurer<States, Events> transitions)
@@ -63,13 +71,13 @@ public class StateMachineConfig
         transitions
                 .withExternal()
                 .source(States.INIT)
-                .target(States.S1)
+                .target(S1)
                 .event(Events.GenID)
                 .action(action.genId())
 
                 .and()
                 .withExternal()
-                .source(States.S1)
+                .source(S1)
                 .target(States.S2)
                 .event(Events.ESIGN_HDB)
                 .action(action.esignHDB())
