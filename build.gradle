@@ -26,6 +26,15 @@ dependencies {
 
     // https://mvnrepository.com/artifact/org.springframework.statemachine/spring-statemachine-core
     implementation 'org.springframework.statemachine:spring-statemachine-core:4.0.0'
+    // https://mvnrepository.com/artifact/org.springframework.statemachine/spring-statemachine-recipes-common
+    implementation 'org.springframework.statemachine:spring-statemachine-recipes-common:4.0.0'
+
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+    implementation 'org.postgresql:postgresql'
+
+//    runtimeOnly 'org.postgresql:postgresql:42.4.3'
+
 
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
