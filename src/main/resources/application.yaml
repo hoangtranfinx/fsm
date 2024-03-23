@@ -1,4 +1,25 @@
-#logging:
-#  level:
-#    org.springframework.statemachine: debug
+logging:
+  level:
+    org.springframework.statemachine: debug
 #    org.springframework.web: debug
+
+spring:
+#  jpa:
+#    hibernate:
+#      dialect: org.hibernate.dialect.PostgreSQLDialect
+#      ddl-auto: validate
+#    show-sql: true
+#    properties:
+#      charSet: UTF-8
+#      hibernate:
+#        jdbc:
+#          batch_size: 10
+#          order_inserts: true
+  datasource:
+#    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${DATABASE_NAME:los-service}
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD:postgres}
+    hikari:
+      minimumIdle: 8
+      maximumPoolSize: 32

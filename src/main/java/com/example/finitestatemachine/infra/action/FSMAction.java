@@ -15,24 +15,4 @@ import reactor.core.publisher.Mono;
 public class FSMAction {
     private final LosHandlerService service;
 
-    public Action<StateMachineConfig.States, StateMachineConfig.Events> genId() {
-        return context -> {
-            String customer = context.getMessageHeaders().get("name", String.class);
-            log.warn("ACTION {}", context.getEvent());
-            service.createLos(customer);
-//            context.getExtendedState()
-//                    .getVariables()
-//                    .put("deployed", true);
-        };
-    }
-
-    public Action<StateMachineConfig.States, StateMachineConfig.Events> esignHDB() {
-        return context -> {
-            log.warn("ACTION {}", context.getEvent());
-            service.esignHDB(context.getMessage().getPayload().toString());
-//            context.getExtendedState()
-//                    .getVariables()
-//                    .put("deployed", true);
-        };
-    }
 }

@@ -12,8 +12,6 @@ public class Origination {
     int id;
     String name;
     String leadId;
-    StateMachineConfig.States states;
-    StateMachineConfig.Events events;
     Map<Object,Object> context;
 
     private static int counter = 0;

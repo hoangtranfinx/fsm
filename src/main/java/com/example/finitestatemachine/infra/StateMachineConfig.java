@@ -1,125 +1,74 @@
 package com.example.finitestatemachine.infra;
 
-import com.example.finitestatemachine.infra.action.FSMAction;
+import com.example.finitestatemachine.infra.config.LocalPersistStateChangeListener;
+import com.example.finitestatemachine.infra.config.Persist;
+import com.example.finitestatemachine.infra.repository.dao.OriginationStateMachineDao;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.messaging.Message;
-import org.springframework.statemachine.action.Action;
+import org.springframework.statemachine.StateMachine;
 import org.springframework.statemachine.config.EnableStateMachine;
-import org.springframework.statemachine.config.EnableStateMachineFactory;
-import org.springframework.statemachine.config.EnumStateMachineConfigurerAdapter;
-import org.springframework.statemachine.config.builders.StateMachineConfigurationConfigurer;
+import org.springframework.statemachine.config.StateMachineConfigurerAdapter;
 import org.springframework.statemachine.config.builders.StateMachineStateConfigurer;
 import org.springframework.statemachine.config.builders.StateMachineTransitionConfigurer;
-import org.springframework.statemachine.guard.Guard;
-import org.springframework.statemachine.listener.StateMachineListener;
-import org.springframework.statemachine.listener.StateMachineListenerAdapter;
-import org.springframework.statemachine.state.State;
-import org.springframework.statemachine.transition.Transition;
-
-import java.util.EnumSet;
-import java.util.Optional;
-
-import static com.example.finitestatemachine.infra.StateMachineConfig.States.S1;
+import org.springframework.statemachine.recipes.persist.PersistStateMachineHandler;
 
 @Configuration
-@EnableStateMachineFactory
+@EnableStateMachine
 @Slf4j
 @RequiredArgsConstructor
 public class StateMachineConfig
-        extends EnumStateMachineConfigurerAdapter<StateMachineConfig.States, StateMachineConfig.Events> {
-
-    public enum States {
-        INIT, S1, S2, END
-    }
-
-    public enum Events {
-        GenID, ESIGN_HDB, CBS
-    }
-
-    private final FSMAction action;
+        extends StateMachineConfigurerAdapter<String, String> {
 
     @Override
-    public void configure(StateMachineConfigurationConfigurer<States, Events> config)
-            throws Exception {
-        config
-                .withConfiguration()
-                .listener(new WorkflowStateListener())
-                .autoStartup(true);
-    }
-
-    @Override
-    public void configure(StateMachineStateConfigurer<States, Events> states)
+    public void configure(StateMachineStateConfigurer<String, String> states)
             throws Exception {
         states
                 .withStates()
-                .initial(States.INIT)
-                .state(S1, testConfig())
-                .states(EnumSet.allOf(States.class))
-                .end(States.END);
+                .initial("PLACED")
+                .state("PROCESSING")
+                .state("SENT")
+                .state("DELIVERED");
     }
-
-    public Action<StateMachineConfig.States, StateMachineConfig.Events> testConfig() {
-        return context -> log.info("testConfig");
-    }
-
 
     @Override
-    public void configure(StateMachineTransitionConfigurer<States, Events> transitions)
+    public void configure(StateMachineTransitionConfigurer<String, String> transitions)
             throws Exception {
         transitions
                 .withExternal()
-                .source(States.INIT)
-                .target(S1)
-                .event(Events.GenID)
-                .action(action.genId())
-
+                .source("PLACED").target("PROCESSING")
+                .event("PROCESS")
                 .and()
                 .withExternal()
-                .source(S1)
-                .target(States.S2)
-                .event(Events.ESIGN_HDB)
-                .action(action.esignHDB())
-
+                .source("PROCESSING").target("SENT")
+                .event("SEND")
                 .and()
                 .withExternal()
-                .source(States.S2)
-                .target(States.END)
-                .event(Events.CBS)
-                ;
-
+                .source("SENT").target("DELIVERED")
+                .event("DELIVER");
     }
 
-    private Guard<States,Events> checkDeploy(){
-        return context -> {
-            Boolean flag = (Boolean) context.getExtendedState()
-                    .getVariables()
-                    .get("deployed");
-            return flag == null ? false : flag;
-        };
-    }
+    @Configuration
+    static class PersistHandlerConfig {
 
-//    private StateMachineListener<States, Events> listener() {
-//        return new StateMachineListenerAdapter<States, Events>() {
-//            @Override
-//            public void transition(Transition<States, Events> transition) {
-//                log.warn("move from:{} to:{}",
-//                        ofNullableState(transition.getSource()),
-//                        ofNullableState(transition.getTarget()));
-//            }
-//
-//            @Override
-//            public void eventNotAccepted(Message<Events> event) {
-//                log.error("event not accepted: {}", event);
-//            }
-//
-//            private Object ofNullableState(State s) {
-//                return Optional.ofNullable(s)
-//                        .map(State::getId)
-//                        .orElse(null);
-//            }
-//        };
-//    }
+        @Autowired
+        private StateMachine<String, String> stateMachine;
+
+        @Autowired
+        private LocalPersistStateChangeListener listener;
+
+        @Bean
+        public Persist persist() {
+            return new Persist(persistStateMachineHandler(), listener);
+        }
+
+        @Bean
+        public PersistStateMachineHandler persistStateMachineHandler() {
+            return new PersistStateMachineHandler(stateMachine);
+        }
+
+    }
 }
 
