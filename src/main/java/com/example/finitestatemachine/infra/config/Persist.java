@@ -4,33 +4,21 @@ import com.example.finitestatemachine.infra.repository.dao.OriginationStateMachi
 import com.example.finitestatemachine.infra.repository.entity.OriginationStateMachineEntity;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
-import org.springframework.statemachine.StateMachine;
 import org.springframework.statemachine.recipes.persist.PersistStateMachineHandler;
-import org.springframework.statemachine.state.State;
-import org.springframework.statemachine.transition.Transition;
-import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
-import java.util.Optional;
-
-@Service
 @Slf4j
 public class Persist {
     private final PersistStateMachineHandler handler;
     private final OriginationStateMachineDao dao;
 
-    private final PersistStateMachineHandler.PersistStateChangeListener listener;
-
-    public Persist(OriginationStateMachineDao dao,
-                   StateMachine<String, String> stateMachine,
-                   PersistStateMachineHandler.PersistStateChangeListener listener) {
-
-        this.handler = new PersistStateMachineHandler(stateMachine);
+	public Persist(PersistStateMachineHandler handler, PersistStateMachineHandler.PersistStateChangeListener listener
+                , OriginationStateMachineDao dao) {
+		this.handler = handler;
+		this.handler.addPersistStateChangeListener(listener);
         this.dao = dao;
-        this.listener = listener;
-        this.handler.addPersistStateChangeListener(listener);
-    }
+	}
 
     @Transactional
     public void change(int order, String event) {
@@ -39,6 +27,9 @@ public class Persist {
 
         handler.handleEventWithStateReactively(MessageBuilder
                         .withPayload(event).setHeader("order", order).build(), origination.getState())
+                .doOnError(e -> {
+                    log.error("Error when processing genID", e);
+                })
                 .subscribe();
     }
 

@@ -30,6 +30,8 @@ public class FSMService {
     @Bean
     public int test(){
         persist.change(4,"GenID");
+
+        persist.change(4,"ESIGN_HDB");
         return 1;
     }
 

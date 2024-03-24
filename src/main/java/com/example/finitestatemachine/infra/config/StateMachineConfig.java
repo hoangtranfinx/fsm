@@ -1,10 +1,14 @@
 package com.example.finitestatemachine.infra.config;
 
 import com.example.finitestatemachine.infra.action.FSMAction;
+import com.example.finitestatemachine.infra.repository.dao.OriginationStateMachineDao;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.Message;
+import org.springframework.statemachine.StateMachine;
 import org.springframework.statemachine.action.Action;
 import org.springframework.statemachine.config.EnableStateMachine;
 import org.springframework.statemachine.config.StateMachineConfigurerAdapter;
@@ -14,6 +18,7 @@ import org.springframework.statemachine.config.builders.StateMachineTransitionCo
 import org.springframework.statemachine.guard.Guard;
 import org.springframework.statemachine.listener.StateMachineListener;
 import org.springframework.statemachine.listener.StateMachineListenerAdapter;
+import org.springframework.statemachine.recipes.persist.PersistStateMachineHandler;
 import org.springframework.statemachine.state.State;
 import org.springframework.statemachine.transition.Transition;
 
@@ -53,7 +58,6 @@ public class StateMachineConfig
                 .withStates()
                 .initial("INIT")
                 .state("S1", testConfig())
-                .state("INIT")
                 .state("S1")
                 .state("S2")
                 .state("END")
@@ -73,6 +77,7 @@ public class StateMachineConfig
                 .source("INIT")
                 .target("S1")
                 .event("GenID")
+                .actionFunction(action::genId)
 //                .action(action.genId())
 
                 .and()
@@ -80,7 +85,7 @@ public class StateMachineConfig
                 .source("S1")
                 .target("S2")
                 .event("ESIGN_HDB")
-                .action(action.esignHDB())
+//                .action(action.esignHDB())
 
                 .and()
                 .withExternal()
@@ -120,6 +125,30 @@ public class StateMachineConfig
                         .orElse(null);
             }
         };
+    }
+
+    @Configuration
+    static class PersistHandlerConfig {
+
+        @Autowired
+        private StateMachine<String, String> stateMachine;
+
+        @Autowired
+        private LocalPersistStateChangeListener listener;
+
+        @Autowired
+        private OriginationStateMachineDao dao;
+
+        @Bean
+        public Persist persist() {
+            return new Persist(persistStateMachineHandler(), listener, dao);
+        }
+
+        @Bean
+        public PersistStateMachineHandler persistStateMachineHandler() {
+            return new PersistStateMachineHandler(stateMachine);
+        }
+
     }
 }
 
