@@ -19,7 +19,7 @@ public class FSMAction {
         return Mono.just(stateContext)
                 .doOnNext(
                         context -> {
-                            String customer = context.getMessageHeaders().get("name", String.class);
+                            String customer = context.getMessageHeaders().get("context", String.class);
                             log.warn("ACTION {}", context.getEvent());
                             service.createLos(customer);
                         })

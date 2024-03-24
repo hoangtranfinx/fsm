@@ -11,9 +11,10 @@ public class LosHandlerService {
 
     public void createLos(String name) {
         if(name.equals("hoang")){
+            log.error("throw error with context: {}", name);
             throw new RuntimeException("hehe");
         }
-        log.info("do something");
+        log.info("do something with context: {}", name);
     }
 
 }

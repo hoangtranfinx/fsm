@@ -1,6 +1,7 @@
 package com.example.finitestatemachine.core;
 
 import com.example.finitestatemachine.infra.config.Persist;
+import com.example.finitestatemachine.infra.config.StateMachineConfig;
 import com.example.finitestatemachine.infra.repository.dao.OriginationStateMachineDao;
 import com.example.finitestatemachine.infra.repository.entity.OriginationStateMachineEntity;
 import lombok.RequiredArgsConstructor;
@@ -20,15 +21,15 @@ public class FSMService {
 
     private final OriginationStateMachineDao dao;
 
-    public void genID(String data, int id) {
-        OriginationStateMachineEntity ori =new OriginationStateMachineEntity(id, "INIT");
+    public void genID(String context, int id) {
+        OriginationStateMachineEntity ori =new OriginationStateMachineEntity(id, StateMachineConfig.States.INIT.name());
         dao.save(ori);
-        persist.change(id,"GenID");
+        persist.change(id, StateMachineConfig.Events.GenID.name(), context);
     }
 
-    public void genIDRetry(String data, int id) {
-        OriginationStateMachineEntity ori =new OriginationStateMachineEntity(id, "INIT");
+    public void genIDRetry(String context, int id) {
+        OriginationStateMachineEntity ori =new OriginationStateMachineEntity(id, StateMachineConfig.States.INIT.name());
         dao.save(ori);
-        persistRetry.change(id,"GenID");
+        persistRetry.change(id,StateMachineConfig.Events.GenID.name(), context);
     }
 }

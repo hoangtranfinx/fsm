@@ -23,19 +23,19 @@ public class LosController {
 
     @PostMapping("/upload")
     public Mono<String> uploadFromCsv(@RequestBody Request request) {
-        fsmService.genID(request.getName(), request.getId());
+        fsmService.genID(request.getContext(), request.getId());
         return Mono.just("Success");
     }
 
     @PostMapping("/upload-retry")
     public Mono<String> genIdRetry(@RequestBody Request request) {
-        fsmService.genIDRetry(request.getName(), request.getId());
+        fsmService.genIDRetry(request.getContext(), request.getId());
         return Mono.just("Success");
     }
 
     @PostMapping("/insert")
     public Mono<String> insert(@RequestBody Request request) {
-        dao.save(new OriginationStateMachineEntity(request.getId(), request.getName()));
+        dao.save(new OriginationStateMachineEntity(request.getId(), request.getContext()));
         return Mono.just("Success");
     }
 }

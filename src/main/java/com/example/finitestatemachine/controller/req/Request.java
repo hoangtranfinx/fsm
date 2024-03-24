@@ -4,6 +4,6 @@ import lombok.Data;
 
 @Data
 public class Request {
-    String name;
+    String context;
     int id;
 }
