@@ -1,6 +1,6 @@
-logging:
-  level:
-    org.springframework.statemachine: debug
+#logging:
+#  level:
+#    org.springframework.statemachine: debug
 #    org.springframework.web: debug
 
 spring:

@@ -5,6 +5,7 @@ import com.example.finitestatemachine.infra.repository.dao.OriginationStateMachi
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.Message;
@@ -42,14 +43,14 @@ public class StateMachineConfig
 
     private final FSMAction action;
 
-//    @Override
-//    public void configure(StateMachineConfigurationConfigurer<String, String> config)
-//            throws Exception {
-//        config
-//                .withConfiguration()
-////                .listener(new WorkflowStateListener())
-//                .autoStartup(true);
-//    }
+    @Override
+    public void configure(StateMachineConfigurationConfigurer<String, String> config)
+            throws Exception {
+        config
+                .withConfiguration()
+                .listener(new WorkflowStateListener())
+                .autoStartup(true);
+    }
 
     @Override
     public void configure(StateMachineStateConfigurer<String, String> String)
@@ -57,15 +58,13 @@ public class StateMachineConfig
         String
                 .withStates()
                 .initial("INIT")
-                .state("S1", testConfig())
+                .stateExit("INIT", context -> log.info("exit init"))
+                .stateEntry("S1", context -> log.info("entry S1"))
+                .stateDo("S1", context -> log.info("do S1"))
                 .state("S1")
                 .state("S2")
                 .state("END")
                 .end("END");
-    }
-
-    public Action<String, String> testConfig() {
-        return context -> log.info("testConfig");
     }
 
 
@@ -78,32 +77,30 @@ public class StateMachineConfig
                 .target("S1")
                 .event("GenID")
                 .actionFunction(action::genId)
-//                .action(action.genId())
 
                 .and()
                 .withExternal()
                 .source("S1")
                 .target("S2")
                 .event("ESIGN_HDB")
-//                .action(action.esignHDB())
 
                 .and()
                 .withExternal()
                 .source("S2")
                 .target("END")
                 .event("CBS")
-                ;
+        ;
 
     }
 
-    private Guard<String,String> checkDeploy(){
-        return context -> {
-            Boolean flag = (Boolean) context.getExtendedState()
-                    .getVariables()
-                    .get("deployed");
-            return flag == null ? false : flag;
-        };
-    }
+//    private Guard<String, String> checkDeploy() {
+//        return context -> {
+//            Boolean flag = (Boolean) context.getExtendedState()
+//                    .getVariables()
+//                    .get("deployed");
+//            return flag == null ? false : flag;
+//        };
+//    }
 
     private StateMachineListener<String, String> listener() {
         return new StateMachineListenerAdapter<String, String>() {
@@ -119,7 +116,7 @@ public class StateMachineConfig
                 log.error("event not accepted: {}", event);
             }
 
-            private Object ofNullableState(State<String,String> s) {
+            private Object ofNullableState(State<String, String> s) {
                 return Optional.ofNullable(s)
                         .map(State::getId)
                         .orElse(null);
@@ -129,26 +126,28 @@ public class StateMachineConfig
 
     @Configuration
     static class PersistHandlerConfig {
-
-        @Autowired
-        private StateMachine<String, String> stateMachine;
-
         @Autowired
         private LocalPersistStateChangeListener listener;
 
         @Autowired
         private OriginationStateMachineDao dao;
 
+        @Autowired
+        PersistStateMachineHandler customPersistStateMachineHandler;
+        @Autowired
+        PersistStateMachineHandler retryPersistStateMachineHandler;
+
         @Bean
+        @Qualifier("persist")
         public Persist persist() {
-            return new Persist(persistStateMachineHandler(), listener, dao);
+            return new Persist(customPersistStateMachineHandler, listener, dao);
         }
 
         @Bean
-        public PersistStateMachineHandler persistStateMachineHandler() {
-            return new PersistStateMachineHandler(stateMachine);
+        @Qualifier("persistRetry")
+        public Persist persistRetry() {
+            return new Persist(retryPersistStateMachineHandler, listener, dao);
         }
-
     }
 }
 

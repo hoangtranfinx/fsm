@@ -12,8 +12,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
-import reactor.core.scheduler.Schedulers;
-
 @RestController
 @Slf4j
 @RequestMapping("/los")
@@ -25,9 +23,14 @@ public class LosController {
 
     @PostMapping("/upload")
     public Mono<String> uploadFromCsv(@RequestBody Request request) {
-        return Mono.defer(()->fsmService.genID(request.getName(), request.getId()))
-                .subscribeOn(Schedulers.boundedElastic())
-                .thenReturn("Success");
+        fsmService.genID(request.getName(), request.getId());
+        return Mono.just("Success");
+    }
+
+    @PostMapping("/upload-retry")
+    public Mono<String> genIdRetry(@RequestBody Request request) {
+        fsmService.genIDRetry(request.getName(), request.getId());
+        return Mono.just("Success");
     }
 
     @PostMapping("/insert")

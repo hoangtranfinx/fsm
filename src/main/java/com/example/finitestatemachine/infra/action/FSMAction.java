@@ -23,13 +23,11 @@ public class FSMAction {
                             log.warn("ACTION {}", context.getEvent());
                             service.createLos(customer);
                         })
+                .doOnError(
+                        error -> {
+                            log.error("Error in genId", error);
+                        }
+                )
                 .then();
-    }
-
-    public Action<String, String> esignHDB() {
-        return context -> {
-            log.warn("ACTION {}", context.getEvent());
-            service.esignHDB(context.getMessage().getPayload());
-        };
     }
 }

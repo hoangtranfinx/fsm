@@ -27,9 +27,6 @@ public class Persist {
 
         handler.handleEventWithStateReactively(MessageBuilder
                         .withPayload(event).setHeader("order", order).build(), origination.getState())
-                .doOnError(e -> {
-                    log.error("Error when processing genID", e);
-                })
                 .subscribe();
     }
 
