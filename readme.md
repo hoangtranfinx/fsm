@@ -12,6 +12,9 @@
 - Persist.java
   - Like a gateway to use state machine
 
+## Note
+- Use only 1 state machine, no need persist each state machine for each entity.
+
 # EXAMPLE
 - This project have 2 example
   - case 1: normal case that apply success, and database will be updated.
